@@ -4,8 +4,8 @@
 
 class Encoder {
 public:
-    const static int COUNTS_PER_REV = 144;
-    const static double ANGLE_PER_PULSE = (2.0 * PI) / COUNTS_PER_REV;
+    constexpr static int COUNTS_PER_REV = 144;
+    constexpr static double ANGLE_PER_PULSE = (2.0 * PI) / COUNTS_PER_REV;
 
     enum Direction {
         Clockwise = 0,
@@ -20,7 +20,7 @@ public:
     double getPosition_rad();
     double getVelocity_rad_s();
 
-    Encoder::Direction getDirection();
+    Direction getDirection();
     void readPulse();
 
 private:
@@ -29,7 +29,7 @@ private:
 
     volatile long _pulseCount = 0;
     volatile int _lastEncoded = 0;
-    volatile Encoder::Direction _direction = Direction::None;
+    volatile Direction _direction = None;
     volatile unsigned long _lastPulseMicros = 0;
     volatile unsigned long _lastPulseWidthMicros = 0;
-}
+};

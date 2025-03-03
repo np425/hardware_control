@@ -22,7 +22,7 @@ byte Motor::getSpeed_pwm() {
     return _speed_pwm;
 }
 
-void Motor::rotate_pwm(Motor::Direction direction, byte speed_pwm) {
+void Motor::rotate_pwm(Direction direction, byte speed_pwm) {
     bool change_direction = _direction != direction;
 
     _direction = direction;
@@ -39,7 +39,7 @@ void Motor::rotate_pwm(Motor::Direction direction, byte speed_pwm) {
         analogWrite(_pin_pwm_r, 0);
     }
 
-    byte pin_pwm = (direction == Direction::Clockwise) ? _pin_pwm_r : _pin_pwm_l;
+    byte pin_pwm = (direction == Clockwise) ? _pin_pwm_r : _pin_pwm_l;
     analogWrite(pin_pwm, _speed_pwm);
 
     digitalWrite(_pin_en_l, HIGH);
@@ -48,15 +48,7 @@ void Motor::rotate_pwm(Motor::Direction direction, byte speed_pwm) {
 
 void Motor::rotate_rad_s(double speed_rad_s) {
     byte speed_pwm = rad_s_to_pwm(speed_rad_s);
-    Motor::Direction direction;
-
-    if (speed_rad_s > 0) {
-        direction = Direction::Clockwise;
-    } else if (speed_rad_s < 0) {
-        direction = Direction::CounterClockwise;
-    } else {
-        direction = Direction::None;
-    }
+    Direction direction = rad_s_to_direction(speed_rad_s);
 
     rotate_pwm(direction, speed_pwm);
 }
@@ -69,4 +61,18 @@ byte Motor::rad_s_to_pwm(double speed_rad_s) {
 
     double pwm_val = fabs(speed_rad_s) / MAX_SPEED_RAD_S * 255.0;
     return (byte)pwm_val;
+}
+
+Motor::Direction Motor::rad_s_to_direction(double speed_rad_s) {
+    Direction direction;
+
+    if (speed_rad_s > 0) {
+        direction = Clockwise;
+    } else if (speed_rad_s < 0) {
+        direction = CounterClockwise;
+    } else {
+        direction = None;
+    }
+
+    return direction;
 }

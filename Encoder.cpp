@@ -17,12 +17,15 @@ long Encoder::getPulseCount() {
 double Encoder::getPosition_rad() {
     return ((double)_pulseCount / COUNTS_PER_REV) * (2.0 * PI);
 }
-
+  
 double Encoder::getVelocity_rad_s() {
-    double pulseTimeSec = _lastPulseWidthMicros / 1'000'000.0;
-    double anglePerPulse = (2.0 * PI) / COUNTS_PER_REV;
+    unsigned long nowMicros = micros();
+    if (nowMicros - _lastPulseMicros > 100000) {
+        return 0.0;
+    }
 
-    double velocity = ANGLE_PER_PULSE / pulseTimeSec;
+    double pulseTimeSec = _lastPulseWidthMicros / 1000000.0;
+    double velocity = (pulseTimeSec > 0) ? (ANGLE_PER_PULSE / pulseTimeSec) : 0;
     
     if (_direction == Encoder::CounterClockwise) {
         velocity = -velocity;
@@ -45,18 +48,18 @@ void Encoder::readPulse() {
 
     if(sum == 0b0001 || sum == 0b0111 || sum == 0b1110 || sum == 0b1000) {
         _pulseCount++;
-        _currentDirection = Encoder::Clockwise;
+        _direction = Clockwise;
 
         _lastPulseWidthMicros = nowMicros - _lastPulseMicros;
         _lastPulseMicros = nowMicros;
     } else if(sum == 0b0010 || sum == 0b0100 || sum == 0b1101 || sum == 0b1011) {
         _pulseCount--;
-        _currentDirection = Encoder::CounterClockwise;
+        _direction = CounterClockwise;
 
         _lastPulseWidthMicros = nowMicros - _lastPulseMicros;
         _lastPulseMicros = nowMicros;
     } else {
-        _currentDirection = Encoder::None;
+        _direction = None;
     }
 
     _lastEncoded = encoded;
