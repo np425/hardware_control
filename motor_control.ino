@@ -47,8 +47,65 @@ void serialEvent() {
     }
 }
 
+bool setParameter(String name, String value) {
+    switch (name) {
+        case "MOT_l_speed_rad_s": {
+            double speed_rad_s = atof(value.c_str());
+            _motor_l.rotate_rad_s(speed_rad_s);
+            success = true;
+        },
+        case "MOT_r_speed_rad_s": {
+            double speed_rad_s = atof(value.c_str());
+            _motor_r.rotate_rad_s(speed_rad_s);
+            success = true;
+        }
+    }
+}
+
+bool executeCommand(String cmd) {
+    int endPos = cmd.indexOf(' ');
+    String action = cmd.substring(0, endPos);
+    int startPos = endPos + 1;
+    bool success = false;
+
+    switch (action) {
+        case "set": {
+            endPos = cmd.indexOf(' ', endPos+1);
+            String name = cmd.substring(startPos, endPos)
+            startPos = endPos + 1;
+            
+            endPos = cmd.indexOf(' ', endPos+1);
+            String value = cmd.substring(startPos, endPos)
+            startPos = endPos + 1;
+
+            success = setParameter(name, value);
+        }
+    }
+
+    return success;
+}
+
+void displayEncoderData() {
+    double position_l = _encoder_l.getPosition_rad();
+    double position_r = _encoder_r.getPosition_rad();
+
+    double velocity_l = _encoder_l.getVelocity_rad_s();
+    double velocity_r = _encoder_r.getVelocity_rad_s();
+
+    Serial.print("ENC_l,");
+    Serial.print(position_l, 6);
+    Serial.print(",");
+    Serial.println(velocity_l, 6); 
+
+    Serial.print("ENC_r,");
+    Serial.print(position_r, 6);
+    Serial.print(",");
+    Serial.println(velocity_r, 6);
+}
+
 void setup() {
     Serial.begin(230400);
+    while (!Serial) {}
   
     _motor_l.setup();
     _motor_r.setup();
@@ -60,31 +117,6 @@ void setup() {
     attachInterrupt(digitalPinToInterrupt(PIN_LENCODER_B_INT), encoder_l_update, CHANGE);
     attachInterrupt(digitalPinToInterrupt(PIN_RENCODER_A_INT), encoder_r_update, CHANGE);
     attachInterrupt(digitalPinToInterrupt(PIN_RENCODER_B_INT), encoder_r_update, CHANGE);
-
-    //_motor_l.rotate_pwm(Motor::Clockwise, 255/8);
-    _motor_r.rotate_pwm(Motor::Clockwise, 255);
-}
-
-bool executeCommand(String cmd) {
-    return false;
-}
-
-void displayEncoderData() {
-    double position_l = _encoder_l.getPosition_rad();
-    double position_r = _encoder_r.getPosition_rad();
-
-    double velocity_l = _encoder_l.getVelocity_rad_s();
-    double velocity_r = _encoder_r.getVelocity_rad_s();
-
-    Serial.print("ENC0,");
-    Serial.print(position_l, 6);
-    Serial.print(",");
-    Serial.println(velocity_l, 6); 
-
-    Serial.print("ENC1,");
-    Serial.print(position_r, 6);
-    Serial.print(",");
-    Serial.println(velocity_r, 6);
 }
 
 void loop() {
@@ -95,6 +127,5 @@ void loop() {
     }
 
     displayEncoderData();
-
     delay(100);
 }

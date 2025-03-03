@@ -57,6 +57,8 @@ byte Motor::rad_s_to_pwm(double speed_rad_s) {
     speed_rad_s = fabs(speed_rad_s);
     if (speed_rad_s > MAX_SPEED_RAD_S) {
         speed_rad_s = MAX_SPEED_RAD_S;
+    } else if (speed_rad_s < -MAX_SPEED_RAD_S) {
+        speed_rad_s = -MAX_SPEED_RAD_S;
     }
 
     double pwm_val = fabs(speed_rad_s) / MAX_SPEED_RAD_S * 255.0;
