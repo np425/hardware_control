@@ -19,12 +19,12 @@ double Encoder::getPosition_rad() {
 }
   
 double Encoder::getVelocity_rad_s() {
-    unsigned long nowMicros = micros();
-    if (nowMicros - _lastPulseMicros > 100000) {
+    unsigned long nowMillis = millis();
+    if (nowMillis - _lastPulseMillis > 100) {
         return 0.0;
     }
 
-    double pulseTimeSec = _lastPulseWidthMicros / 1000000.0;
+    double pulseTimeSec = _lastPulseWidthMillis / 1000.0;
     double velocity = (pulseTimeSec > 0) ? (ANGLE_PER_PULSE / pulseTimeSec) : 0;
     
     if (_direction == Encoder::CounterClockwise) {
@@ -38,7 +38,7 @@ Encoder::Direction Encoder::getDirection() {
 }
 
 void Encoder::readPulse() {
-    unsigned long nowMicros = micros();
+    unsigned long nowMillis = millis();
 
     int a = digitalRead(_pin_a);
     int b = digitalRead(_pin_b);
@@ -50,14 +50,14 @@ void Encoder::readPulse() {
         _pulseCount++;
         _direction = Clockwise;
 
-        _lastPulseWidthMicros = nowMicros - _lastPulseMicros;
-        _lastPulseMicros = nowMicros;
+        _lastPulseWidthMillis = nowMillis - _lastPulseMillis;
+        _lastPulseMillis = nowMillis;
     } else if(sum == 0b0010 || sum == 0b0100 || sum == 0b1101 || sum == 0b1011) {
         _pulseCount--;
         _direction = CounterClockwise;
 
-        _lastPulseWidthMicros = nowMicros - _lastPulseMicros;
-        _lastPulseMicros = nowMicros;
+        _lastPulseWidthMillis = nowMillis - _lastPulseMillis;
+        _lastPulseMillis = nowMillis;
     } else {
         _direction = None;
     }

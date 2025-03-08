@@ -30,6 +30,6 @@ private:
     volatile long _pulseCount = 0;
     volatile int _lastEncoded = 0;
     volatile Direction _direction = None;
-    volatile unsigned long _lastPulseMicros = 0;
-    volatile unsigned long _lastPulseWidthMicros = 0;
+    volatile unsigned long _lastPulseMillis = 0;
+    volatile unsigned long _lastPulseWidthMillis = 0;
 };
