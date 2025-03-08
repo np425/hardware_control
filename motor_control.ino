@@ -48,18 +48,17 @@ void serialEvent() {
 }
 
 bool setParameter(String name, String value) {
-    switch (name) {
-        case "MOT_l_speed_rad_s": {
-            double speed_rad_s = atof(value.c_str());
-            _motor_l.rotate_rad_s(speed_rad_s);
-            success = true;
-        },
-        case "MOT_r_speed_rad_s": {
-            double speed_rad_s = atof(value.c_str());
-            _motor_r.rotate_rad_s(speed_rad_s);
-            success = true;
-        }
+    bool success = false;
+    if (name == "MOT_l_speed_rad_s") {
+        double speed_rad_s = atof(value.c_str());
+        _motor_l.rotate_rad_s(speed_rad_s);
+        success = true;
+    } else if (name == "MOT_r_speed_rad_s") {
+        double speed_rad_s = atof(value.c_str());
+        _motor_r.rotate_rad_s(speed_rad_s);
+        success = true;      
     }
+    return success;
 }
 
 bool executeCommand(String cmd) {
@@ -68,18 +67,16 @@ bool executeCommand(String cmd) {
     int startPos = endPos + 1;
     bool success = false;
 
-    switch (action) {
-        case "set": {
-            endPos = cmd.indexOf(' ', endPos+1);
-            String name = cmd.substring(startPos, endPos)
-            startPos = endPos + 1;
+    if (action == "set") {
+        endPos = cmd.indexOf(' ', startPos);
+        String name = cmd.substring(startPos, endPos);
+        startPos = endPos + 1;
             
-            endPos = cmd.indexOf(' ', endPos+1);
-            String value = cmd.substring(startPos, endPos)
-            startPos = endPos + 1;
+        endPos = cmd.indexOf(' ', startPos);
+        String value = cmd.substring(startPos, endPos);
+        startPos = endPos + 1;
 
-            success = setParameter(name, value);
-        }
+        success = setParameter(name, value);
     }
 
     return success;
