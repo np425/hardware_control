@@ -24,13 +24,12 @@ double Encoder::getVelocity_rad_s() {
         return 0.0;
     }
 
-    double pulseTimeSec = _lastPulseWidthMicros / 1000000.0;
-    double velocity = (pulseTimeSec > 0) ? (ANGLE_PER_PULSE / pulseTimeSec) : 0;
+    double velocity_rad_s = _velocity * ANGLE_PER_PULSE;
     
     if (_direction == Encoder::CounterClockwise) {
-        velocity = -velocity;
+        velocity_rad_s = -velocity_rad_s;
     }
-    return velocity;
+    return velocity_rad_s;
 }
 
 Encoder::Direction Encoder::getDirection() {
@@ -45,22 +44,28 @@ void Encoder::readPulse() {
     int encoded = (a << 1) | b;
     
     int sum = (_lastEncoded << 2) | encoded;
-
+    
     if(sum == 0b0001 || sum == 0b0111 || sum == 0b1110 || sum == 0b1000) {
         _pulseCount++;
         _direction = Clockwise;
-
-        _lastPulseWidthMicros = nowMicros - _lastPulseMicros;
-        _lastPulseMicros = nowMicros;
+        validPulse = true;
     } else if(sum == 0b0010 || sum == 0b0100 || sum == 0b1101 || sum == 0b1011) {
         _pulseCount--;
         _direction = CounterClockwise;
-
-        _lastPulseWidthMicros = nowMicros - _lastPulseMicros;
-        _lastPulseMicros = nowMicros;
+        validPulse = true;
     } else {
         _direction = None;
     }
+    
+    if(_direction != None) {
+        // Low-pass filter update
+        _lastPulseWidthMicros = nowMicros - _lastPulseMicros;
+        _lastPulseMicros = nowMicros;
 
+        double v_inst = (_lastPulseWidthMicros > 0) ? (1e6 / _lastPulseWidthMicros) : 0.0;
+        const double alpha = 0.1;
+        _velocity = _velocity + alpha * (v_inst - _velocity);
+    }
+    
     _lastEncoded = encoded;
 }

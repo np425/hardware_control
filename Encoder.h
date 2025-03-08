@@ -32,4 +32,5 @@ private:
     volatile Direction _direction = None;
     volatile unsigned long _lastPulseMicros = 0;
     volatile unsigned long _lastPulseWidthMicros = 0;
+    volatile double _velocity = 0;
 };
