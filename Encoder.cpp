@@ -48,11 +48,9 @@ void Encoder::readPulse() {
     if(sum == 0b0001 || sum == 0b0111 || sum == 0b1110 || sum == 0b1000) {
         _pulseCount++;
         _direction = Clockwise;
-        validPulse = true;
     } else if(sum == 0b0010 || sum == 0b0100 || sum == 0b1101 || sum == 0b1011) {
         _pulseCount--;
         _direction = CounterClockwise;
-        validPulse = true;
     } else {
         _direction = None;
     }
