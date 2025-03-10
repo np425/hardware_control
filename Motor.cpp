@@ -22,7 +22,7 @@ int Motor::getSpeed_pwm() {
     return _speed_pwm;
 }
 
-void Motor::rotate_pwm(int speed_pwm) {    
+void Motor::rotate_pwm(int speed_pwm) {
     Direction direction;
     if (speed_pwm > 0) {
         direction = Clockwise;
@@ -30,6 +30,11 @@ void Motor::rotate_pwm(int speed_pwm) {
         direction = CounterClockwise;
     } else {
         direction = None;
+    }
+
+    speed_pwm = abs(speed_pwm);
+    if (speed_pwm > 255) {
+        speed_pwm = 255;
     }
 
     bool change_direction = _direction != direction;
@@ -49,7 +54,8 @@ void Motor::rotate_pwm(int speed_pwm) {
     }
 
     byte pin_pwm = (direction == Clockwise) ? _pin_pwm_r : _pin_pwm_l;
-    analogWrite(pin_pwm, abs(_speed_pwm));
+    
+    analogWrite(pin_pwm, _speed_pwm);
 
     digitalWrite(_pin_en_l, HIGH);
     digitalWrite(_pin_en_r, HIGH);
