@@ -53,10 +53,18 @@ bool setParameter(String name, String value) {
         double speed_rad_s = atof(value.c_str());
         _motor_l.rotate_rad_s(speed_rad_s);
         success = true;
+    } else if (name == "MOT_l_speed_pwm") {
+        int speed_pwm = atoi(value.c_str());
+        _motor_l.rotate_pwm(speed_pwm);
+        success = true;
     } else if (name == "MOT_r_speed_rad_s") {
         double speed_rad_s = atof(value.c_str());
         _motor_r.rotate_rad_s(speed_rad_s);
         success = true;      
+    } else if (name == "MOT_r_speed_pwm") {
+        int speed_pwm = atoi(value.c_str());
+        _motor_r.rotate_pwm(speed_pwm);
+        success = true;
     }
     return success;
 }
@@ -124,5 +132,4 @@ void loop() {
     }
 
     displayEncoderData();
-    delay(100);
 }

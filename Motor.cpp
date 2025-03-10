@@ -18,11 +18,25 @@ Motor::Direction Motor::getDirection() {
     return _direction;
 }
 
-byte Motor::getSpeed_pwm() {
+int Motor::getSpeed_pwm() {
     return _speed_pwm;
 }
 
-void Motor::rotate_pwm(Direction direction, byte speed_pwm) {
+void Motor::rotate_pwm(int speed_pwm) {
+    Direction direction;
+    if (speed_pwm > 0) {
+        direction = Clockwise;
+    } else if (speed_pwm < 0) {
+        direction = CounterClockwise;
+    } else {
+        direction = None;
+    }
+
+    speed_pwm = abs(speed_pwm);
+    if (speed_pwm > 255) {
+        speed_pwm = 255;
+    }
+
     bool change_direction = _direction != direction;
 
     _direction = direction;
@@ -40,6 +54,7 @@ void Motor::rotate_pwm(Direction direction, byte speed_pwm) {
     }
 
     byte pin_pwm = (direction == Clockwise) ? _pin_pwm_r : _pin_pwm_l;
+    
     analogWrite(pin_pwm, _speed_pwm);
 
     digitalWrite(_pin_en_l, HIGH);
@@ -47,34 +62,17 @@ void Motor::rotate_pwm(Direction direction, byte speed_pwm) {
 }
 
 void Motor::rotate_rad_s(double speed_rad_s) {
-    byte speed_pwm = rad_s_to_pwm(speed_rad_s);
-    Direction direction = rad_s_to_direction(speed_rad_s);
-
-    rotate_pwm(direction, speed_pwm);
+    int speed_pwm = rad_s_to_pwm(speed_rad_s);
+    rotate_pwm(speed_pwm);
 }
 
-byte Motor::rad_s_to_pwm(double speed_rad_s) {
-    speed_rad_s = fabs(speed_rad_s);
+int Motor::rad_s_to_pwm(double speed_rad_s) {
     if (speed_rad_s > MAX_SPEED_RAD_S) {
         speed_rad_s = MAX_SPEED_RAD_S;
     } else if (speed_rad_s < -MAX_SPEED_RAD_S) {
         speed_rad_s = -MAX_SPEED_RAD_S;
     }
 
-    double pwm_val = fabs(speed_rad_s) / MAX_SPEED_RAD_S * 255.0;
-    return (byte)pwm_val;
-}
-
-Motor::Direction Motor::rad_s_to_direction(double speed_rad_s) {
-    Direction direction;
-
-    if (speed_rad_s > 0) {
-        direction = Clockwise;
-    } else if (speed_rad_s < 0) {
-        direction = CounterClockwise;
-    } else {
-        direction = None;
-    }
-
-    return direction;
+    int pwm_val = (speed_rad_s / MAX_SPEED_RAD_S) * 255;
+    return pwm_val;
 }
