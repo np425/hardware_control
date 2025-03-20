@@ -10,22 +10,22 @@ void Encoder::setup() {
     pinMode(_pin_b, INPUT_PULLUP);
 }
 
-long Encoder::getPulseCount() {
+unsigned long Encoder::getPulseCount() {
     return _pulseCount;
 }
 
-double Encoder::getPosition_rad() {
-    return ((double)_pulseCount / COUNTS_PER_REV) * (2.0 * PI);
+float Encoder::getPosition_rad() {
+    return ((float)_pulseCount / COUNTS_PER_REV) * (2.0 * PI);
 }
   
-double Encoder::getVelocity_rad_s() {
-    unsigned long nowMicros = micros();
-    if (nowMicros - _lastPulseMicros > 100000) {
+float Encoder::getVelocity_rad_s() {
+    unsigned long nowMillis = millis();
+    if (nowMillis - _lastPulseMillis > 100) {
         return 0.0;
     }
 
-    double pulseTimeSec = (_pulseWidthMicrosSum / (double)COUNTS_PER_REV) / 1000000.0;
-    double velocity = (pulseTimeSec > 0) ? (ANGLE_PER_PULSE / pulseTimeSec) : 0;
+    float pulseTimeSec = (_pulseWidthMillisSum / (float)COUNTS_PER_REV) / 1000000.0;
+    float velocity = (pulseTimeSec > 0) ? (ANGLE_PER_PULSE / pulseTimeSec) : 0;
     
     if (_direction == Encoder::CounterClockwise) {
         velocity = -velocity;
@@ -38,11 +38,11 @@ Encoder::Direction Encoder::getDirection() {
 }
 
 void Encoder::readPulse() {
-    unsigned long nowMicros = micros();
+    unsigned long nowMillis = millis();
 
-    int a = digitalRead(_pin_a);
-    int b = digitalRead(_pin_b);
-    int encoded = (a << 1) | b;
+    byte a = digitalRead(_pin_a);
+    byte b = digitalRead(_pin_b);
+    byte encoded = (a << 1) | b;
     
     int sum = (_lastEncoded << 2) | encoded;
 
@@ -57,13 +57,13 @@ void Encoder::readPulse() {
     }
 
     if (_direction != None) {
-        double pulseWidthMicros = nowMicros - _lastPulseMicros;
-        _lastPulseMicros = nowMicros;
+        unsigned long pulseWidthMillis = nowMillis - _lastPulseMillis;
+        _lastPulseMillis = nowMillis;
 
-        _pulseWidthMicrosSum = _pulseWidthMicrosSum - _pulseWidthsMicros[_oldestPulseIndex];
-        _pulseWidthsMicros[_oldestPulseIndex] = pulseWidthMicros;
-        _pulseWidthMicrosSum = _pulseWidthMicrosSum + pulseWidthMicros;
-        _oldestPulseIndex = (_oldestPulseIndex + 1) % COUNTS_PER_REV;
+        _pulseWidthMillisSum = _pulseWidthMillisSum - _pulseWidthsMillis[_oldestPulseIndex];
+        _pulseWidthsMillis[_oldestPulseIndex] = pulseWidthsMillis;
+        _pulseWidthMillisSum = _pulseWidthMillisSum + pulseWidthMillis;
+        _oldestPulseIndex = (_oldestPulseIndex + 1) % sizeof(_pulseWidthsMillis);
     }
 
     _lastEncoded = encoded;

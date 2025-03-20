@@ -61,12 +61,12 @@ void Motor::rotate_pwm(int speed_pwm) {
     digitalWrite(_pin_en_r, HIGH);
 }
 
-void Motor::rotate_rad_s(double speed_rad_s) {
+void Motor::rotate_rad_s(float speed_rad_s) {
     int speed_pwm = rad_s_to_pwm(speed_rad_s);
     rotate_pwm(speed_pwm);
 }
 
-int Motor::rad_s_to_pwm(double speed_rad_s) {
+int Motor::rad_s_to_pwm(float speed_rad_s) {
     if (speed_rad_s > MAX_SPEED_RAD_S) {
         speed_rad_s = MAX_SPEED_RAD_S;
     } else if (speed_rad_s < -MAX_SPEED_RAD_S) {

@@ -1,6 +1,9 @@
 #include "Motor.h"
 #include "Encoder.h"
 
+const int RATE_BAUD_BPS = 115200;
+const int RATE_PUBLISH_HZ = 100;
+
 const byte PIN_LMOTOR_L_PWM = 6; // 490.20Hz
 const byte PIN_LMOTOR_R_PWM = 7; // 490.20Hz
 const byte PIN_LMOTOR_L_EN = 22;
@@ -37,7 +40,7 @@ void encoder_r_update() {
 }
 
 void serialEvent() {
-    while (Serial.available()) {
+    while (Serial.available() > 0) {
         char inChar = (char)Serial.read();
         if (inChar == '\n') {
             _cmdReady = true;
@@ -91,25 +94,32 @@ bool executeCommand(String cmd) {
 }
 
 void displayEncoderData() {
-    double position_l = _encoder_l.getPosition_rad();
-    double position_r = _encoder_r.getPosition_rad();
+    float position_l = _encoder_l.getPosition_rad();
+    float position_r = _encoder_r.getPosition_rad();
 
-    double velocity_l = _encoder_l.getVelocity_rad_s();
-    double velocity_r = _encoder_r.getVelocity_rad_s();
+    float velocity_l = _encoder_l.getVelocity_rad_s();
+    float velocity_r = _encoder_r.getVelocity_rad_s();
 
-    Serial.print("ENC_l,");
-    Serial.print(position_l, 6);
-    Serial.print(",");
-    Serial.println(velocity_l, 6); 
+    Serial.write("ENC_MOT,");  
+    Serial.write(reinterpret_cast<const uint8_t*>(&position_l), sizeof(position_l));
+    Serial.write(reinterpret_cast<const uint8_t*>(&velocity_l), sizeof(velocity_l));
+    Serial.write(reinterpret_cast<const uint8_t*>(&position_r), sizeof(position_r));
+    Serial.write(reinterpret_cast<const uint8_t*>(&velocity_r), sizeof(velocity_r));
+    Serial.write("\n");
 
-    Serial.print("ENC_r,");
-    Serial.print(position_r, 6);
-    Serial.print(",");
-    Serial.println(velocity_r, 6);
+    // Serial.print("ENC_l,");
+    // Serial.print(position_l, 3);
+    // Serial.print(",");
+    // Serial.println(velocity_l, 3); 
+
+    // Serial.print("ENC_r,");
+    // Serial.print(position_r, 3);
+    // Serial.print(",");
+    // Serial.println(velocity_r, 3);
 }
 
 void setup() {
-    Serial.begin(230400);
+    Serial.begin(RATE_BAUD_BPS);
     while (!Serial) {}
   
     _motor_l.setup();
@@ -125,11 +135,19 @@ void setup() {
 }
 
 void loop() {
+    static unsigned long lastTimeMillis = 0;
+  
     if (_cmdReady) {
+        //Serial.print("Received command: ");
+        //Serial.println(_cmd);
         executeCommand(_cmd);
         _cmd = "";
         _cmdReady = false;
     }
 
-    displayEncoderData();
+    unsigned long currentTimeMillis = millis();
+    if (currentTimeMillis - lastTimeMillis >= 1/RATE_PUBLISH_HZ) {
+        lastTimeMillis = currentTimeMillis;
+        displayEncoderData();
+    }
 }

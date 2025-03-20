@@ -16,9 +16,9 @@ public:
     Encoder(byte pin_a, byte pin_b);
     void setup();
 
-    long getPulseCount();
-    double getPosition_rad();
-    double getVelocity_rad_s();
+    unsigned long getPulseCount();
+    float getPosition_rad();
+    float getVelocity_rad_s();
 
     Direction getDirection();
     void readPulse();
@@ -27,11 +27,11 @@ private:
     byte _pin_a;
     byte _pin_b;
 
-    volatile long _pulseCount = 0;
-    volatile int _lastEncoded = 0;
+    volatile unsigned long _pulseCount = 0;
+    volatile byte _lastEncoded = 0;
     volatile Direction _direction = None;
-    volatile unsigned long _lastPulseMicros = 0;
-    volatile unsigned long _pulseWidthsMicros[COUNTS_PER_REV] = {0};
+    volatile unsigned long _lastPulseMillis = 0;
+    volatile unsigned long _pulseWidthsMillis[COUNTS_PER_REV] = {0};
     volatile byte _oldestPulseIndex = 0;
-    volatile unsigned long _pulseWidthMicrosSum = 0;
+    volatile unsigned long _pulseWidthMillisSum = 0;
 };
