@@ -61,7 +61,7 @@ void Encoder::readPulse() {
         _lastPulseMillis = nowMillis;
 
         _pulseWidthMillisSum = _pulseWidthMillisSum - _pulseWidthsMillis[_oldestPulseIndex];
-        _pulseWidthsMillis[_oldestPulseIndex] = pulseWidthsMillis;
+        _pulseWidthsMillis[_oldestPulseIndex] = pulseWidthMillis;
         _pulseWidthMillisSum = _pulseWidthMillisSum + pulseWidthMillis;
         _oldestPulseIndex = (_oldestPulseIndex + 1) % sizeof(_pulseWidthsMillis);
     }

@@ -1,8 +1,8 @@
 #include "Motor.h"
 #include "Encoder.h"
 
-const int RATE_BAUD_BPS = 115200;
-const int RATE_PUBLISH_HZ = 100;
+const unsigned long RATE_BAUD_BPS = 115200;
+const unsigned int RATE_PUBLISH_HZ = 10;
 
 const byte PIN_LMOTOR_L_PWM = 6; // 490.20Hz
 const byte PIN_LMOTOR_R_PWM = 7; // 490.20Hz
@@ -119,9 +119,9 @@ void displayEncoderData() {
 }
 
 void setup() {
-    Serial.begin(RATE_BAUD_BPS);
+    Serial.begin(115200, SERIAL_8N1);
     while (!Serial) {}
-  
+
     _motor_l.setup();
     _motor_r.setup();
 
@@ -138,15 +138,15 @@ void loop() {
     static unsigned long lastTimeMillis = 0;
   
     if (_cmdReady) {
-        //Serial.print("Received command: ");
-        //Serial.println(_cmd);
+        Serial.print("Received command: ");
+        Serial.println(_cmd);
         executeCommand(_cmd);
         _cmd = "";
         _cmdReady = false;
     }
 
     unsigned long currentTimeMillis = millis();
-    if (currentTimeMillis - lastTimeMillis >= 1/RATE_PUBLISH_HZ) {
+    if (currentTimeMillis - lastTimeMillis >= 1000/RATE_PUBLISH_HZ) {
         lastTimeMillis = currentTimeMillis;
         displayEncoderData();
     }
