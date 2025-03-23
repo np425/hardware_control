@@ -2,7 +2,6 @@
 #include "Encoder.h"
 
 const unsigned long RATE_BAUD_BPS = 115200;
-const unsigned int RATE_PUBLISH_HZ = 1000;
 
 const byte PIN_LMOTOR_L_PWM = 6; // 490.20Hz
 const byte PIN_LMOTOR_R_PWM = 7; // 490.20Hz
@@ -44,10 +43,27 @@ void serialEvent() {
         char inChar = (char)Serial.read();
         if (inChar == '\n') {
             _cmdReady = true;
+            break;
         } else {
             _cmd += inChar;
         }
     }
+}
+
+void displayEncoderData() {
+    float position_l = _encoder_l.getPosition_rad();
+    float position_r = _encoder_r.getPosition_rad();
+
+    float velocity_l = _encoder_l.getVelocity_rad_s();
+    float velocity_r = _encoder_r.getVelocity_rad_s();
+
+    Serial.print(position_l, 3);
+    Serial.print(",");
+    Serial.print(position_r, 3);
+    Serial.print(",");
+    Serial.print(velocity_l, 3); 
+    Serial.print(",");
+    Serial.println(velocity_r, 3);
 }
 
 bool setParameter(String name, String value) {
@@ -88,33 +104,14 @@ bool executeCommand(String cmd) {
         startPos = endPos + 1;
 
         success = setParameter(name, value);
+        if (success) {
+            Serial.println("OK");
+        }
+    } else if (action == "get") {
+        displayEncoderData();
     }
 
     return success;
-}
-
-void displayEncoderData() {
-    float position_l = _encoder_l.getPosition_rad();
-    float position_r = _encoder_r.getPosition_rad();
-
-    float velocity_l = _encoder_l.getVelocity_rad_s();
-    float velocity_r = _encoder_r.getVelocity_rad_s();
-
-    // Serial.write("ENC_MOT,");  
-    // Serial.write(reinterpret_cast<const uint8_t*>(&position_l), sizeof(position_l));
-    // Serial.write(reinterpret_cast<const uint8_t*>(&velocity_l), sizeof(velocity_l));
-    // Serial.write(reinterpret_cast<const uint8_t*>(&position_r), sizeof(position_r));
-    // Serial.write(reinterpret_cast<const uint8_t*>(&velocity_r), sizeof(velocity_r));
-    // Serial.write("\n");
-
-    Serial.print("ENC,");
-    Serial.print(position_l, 3);
-    Serial.print(",");
-    Serial.print(position_r, 3);
-    Serial.print(",");
-    Serial.print(velocity_l, 3); 
-    Serial.print(",");
-    Serial.println(velocity_r, 3);
 }
 
 void setup() {
@@ -134,24 +131,9 @@ void setup() {
 }
 
 void loop() {
-    static unsigned long lastMillis = 0;
-    static unsigned long lastCmdMillis = millis();
-  
     if (_cmdReady) {
-        unsigned long elapsedMillis = millis();
-        Serial.print("PING @ ");
-        Serial.print(elapsedMillis - lastCmdMillis);
-        Serial.print(" ms CMD = ");
-        Serial.println(_cmd);
         executeCommand(_cmd);
         _cmd = "";
         _cmdReady = false;
-        lastCmdMillis = elapsedMillis;
-    }
-
-    unsigned long currentMillis = millis();
-    if (currentMillis - lastMillis >= 1000/RATE_PUBLISH_HZ) {
-        lastMillis = currentMillis;
-        displayEncoderData();
     }
 }
