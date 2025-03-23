@@ -100,13 +100,6 @@ void displayEncoderData() {
     float velocity_l = _encoder_l.getVelocity_rad_s();
     float velocity_r = _encoder_r.getVelocity_rad_s();
 
-    // Serial.write("ENC_MOT,");  
-    // Serial.write(reinterpret_cast<const uint8_t*>(&position_l), sizeof(position_l));
-    // Serial.write(reinterpret_cast<const uint8_t*>(&velocity_l), sizeof(velocity_l));
-    // Serial.write(reinterpret_cast<const uint8_t*>(&position_r), sizeof(position_r));
-    // Serial.write(reinterpret_cast<const uint8_t*>(&velocity_r), sizeof(velocity_r));
-    // Serial.write("\n");
-
     Serial.print("ENC,");
     Serial.print(position_l, 3);
     Serial.print(",");
@@ -150,8 +143,8 @@ void loop() {
     }
 
     unsigned long currentMillis = millis();
-    if (currentMillis - lastMillis >= 1000/RATE_PUBLISH_HZ) {
-        lastMillis = currentMillis;
+    if (currentMillis - lastMillis >= 1000/RATE_PUBLISH_HZ && Serial.availableForWrite() > 50) {
         displayEncoderData();
+        lastMillis = currentMillis;
     }
 }
