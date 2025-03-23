@@ -1,5 +1,6 @@
 #include "Motor.h"
 #include "Encoder.h"
+#include "PID.h"
 
 const unsigned long RATE_BAUD_BPS = 115200;
 
@@ -21,11 +22,22 @@ const byte PIN_LENCODER_B_INT = 19;
 const byte PIN_RENCODER_A_INT = 20;
 const byte PIN_RENCODER_B_INT = 21;
 
+const float PID_KP = 1.0;
+const float PID_KI = 0.1;
+const float PID_KD = 0.01;
+const unsigned int RATE_PID_HZ = 1000;
+
 Motor _motor_l(PIN_LMOTOR_L_EN, PIN_LMOTOR_R_EN, PIN_LMOTOR_L_PWM, PIN_LMOTOR_R_PWM);
 Motor _motor_r(PIN_RMOTOR_L_EN, PIN_RMOTOR_R_EN, PIN_RMOTOR_L_PWM, PIN_RMOTOR_R_PWM);
 
 Encoder _encoder_l(PIN_LENCODER_A_INT, PIN_LENCODER_B_INT);
 Encoder _encoder_r(PIN_RENCODER_A_INT, PIN_RENCODER_B_INT);
+
+PID _pid_motor_l(PID_KP, PID_KI, PID_KD);
+PID _pid_motor_r(PID_KP, PID_KI, PID_KD);
+
+float _set_motor_l_speed_rad_s = 0;
+float _set_motor_r_speed_rad_s = 0;
 
 String _cmd = "";
 bool _cmdReady = false;
@@ -69,21 +81,17 @@ void displayEncoderData() {
 bool setParameter(String name, String value) {
     bool success = false;
     if (name == "MOT_l_speed_rad_s") {
-        double speed_rad_s = atof(value.c_str());
-        _motor_l.rotate_rad_s(speed_rad_s);
+        _set_motor_l_speed_rad_s = atof(value.c_str());
         success = true;
     } else if (name == "MOT_l_speed_pwm") {
-        int speed_pwm = atoi(value.c_str());
-        _motor_l.rotate_pwm(speed_pwm);
-        success = true;
+        //_set_motor_l_pwm = atoi(value.c_str());
+        success = false;
     } else if (name == "MOT_r_speed_rad_s") {
-        double speed_rad_s = atof(value.c_str());
-        _motor_r.rotate_rad_s(speed_rad_s);
+        _set_motor_r_speed_rad_s = atof(value.c_str());
         success = true;      
     } else if (name == "MOT_r_speed_pwm") {
-        int speed_pwm = atoi(value.c_str());
-        _motor_r.rotate_pwm(speed_pwm);
-        success = true;
+        //_set_motor_r_pwm = atoi(value.c_str());
+        success = false;
     }
     return success;
 }
@@ -131,9 +139,24 @@ void setup() {
 }
 
 void loop() {
+    static unsigned long lastPIDUpdateMillis = millis();
+
     if (_cmdReady) {
         executeCommand(_cmd);
         _cmd = "";
         _cmdReady = false;
+    }
+
+    unsigned long nowMillis = millis();
+    if (nowMillis - lastPIDUpdateMillis > 1000/RATE_PID_HZ) {
+        float measured_speed_rad_s, calculated_speed_pwm;
+
+        measured_speed_rad_s = _encoder_l.getVelocity_rad_s();
+        calculated_speed_pwm = _pid_motor_l.compute(_set_motor_l_speed_rad_s, measured_speed_rad_s);
+        _motor_l.rotate_pwm((int)round(measured_speed_rad_s));
+
+        measured_speed_rad_s = _encoder_r.getVelocity_rad_s();
+        calculated_speed_pwm = _pid_motor_r.compute(_set_motor_l_speed_rad_s, measured_speed_rad_s);
+        _motor_r.rotate_pwm((int)round(measured_speed_rad_s));
     }
 }
