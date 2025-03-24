@@ -145,10 +145,12 @@ void setup() {
     _encoder_l.setup();
     _encoder_r.setup();
 
-    attachInterrupt(digitalPinToInterrupt(PIN_LENCODER_A_INT), encoder_l_update, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(PIN_LENCODER_B_INT), encoder_l_update, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(PIN_RENCODER_A_INT), encoder_r_update, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(PIN_RENCODER_B_INT), encoder_r_update, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(PIN_LENCODER_A_INT), encoder_l_update, RISING);
+
+    // attachInterrupt(digitalPinToInterrupt(PIN_LENCODER_A_INT), encoder_l_update, CHANGE);
+    // attachInterrupt(digitalPinToInterrupt(PIN_LENCODER_B_INT), encoder_l_update, CHANGE);
+    // attachInterrupt(digitalPinToInterrupt(PIN_RENCODER_A_INT), encoder_r_update, CHANGE);
+    // attachInterrupt(digitalPinToInterrupt(PIN_RENCODER_B_INT), encoder_r_update, CHANGE);
 }
 
 void loop() {
@@ -165,14 +167,14 @@ void loop() {
         float measured_speed_rad_s;
         int calculated_speed_pwm;
 
-        float l_speed_rad_s = _encoder_l.getVelocity_rad_s();
-        float r_speed_rad_s = _encoder_r.getVelocity_rad_s();
+        // float l_speed_rad_s = _encoder_l.getVelocity_rad_s();
+        // float r_speed_rad_s = _encoder_r.getVelocity_rad_s();
 
-        Serial.print("[L] Measured (rad/s): ");
-        Serial.print(l_speed_rad_s);
-        Serial.print(", ");
-        Serial.print("[R] Measured (rad/s): ");
-        Serial.println(r_speed_rad_s);
+        // Serial.print("[L] Measured (rad/s): ");
+        // Serial.print(l_speed_rad_s);
+        // Serial.print(", ");
+        // Serial.print("[R] Measured (rad/s): ");
+        // Serial.println(r_speed_rad_s);
 
         // if (_set_motor_l_speed_rad_s != 0.0) {
         //     measured_speed_rad_s = _encoder_l.getVelocity_rad_s();

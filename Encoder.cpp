@@ -38,23 +38,27 @@ Encoder::Direction Encoder::getDirection() {
 }
 
 void Encoder::readPulse() {
-    unsigned long nowMillis = millis();
+    bool b = digitalRead(_pin_b);
 
-    byte a = digitalRead(_pin_a);
-    byte b = digitalRead(_pin_b);
-    byte encoded = (a << 1) | b;
+    Serial.print("B: ");
+    Serial.println(b);
+
+    if (b) ++_pulseCount;
+    else --_pulseCount;
+
+    // byte encoded = (a << 1) | b;
     
-    int sum = (_lastEncoded << 2) | encoded;
+    // int sum = (_lastEncoded << 2) | encoded;
 
-    if(sum == 0b0001 || sum == 0b0111 || sum == 0b1110 || sum == 0b1000) {
-        _pulseCount++;
-        _direction = Clockwise;
-    } else if(sum == 0b0010 || sum == 0b0100 || sum == 0b1101 || sum == 0b1011) {
-        _pulseCount--;
-        _direction = CounterClockwise;
-    } else {
-        _direction = None;
-    }
+    // if(sum == 0b0001 || sum == 0b0111 || sum == 0b1110 || sum == 0b1000) {
+    //     _pulseCount++;
+    //     _direction = Clockwise;
+    // } else if(sum == 0b0010 || sum == 0b0100 || sum == 0b1101 || sum == 0b1011) {
+    //     _pulseCount--;
+    //     _direction = CounterClockwise;
+    // } else {
+    //     _direction = None;
+    // }
 
-    _lastEncoded = encoded;
+    // _lastEncoded = encoded;
 }
