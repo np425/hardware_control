@@ -10,7 +10,7 @@ void Encoder::setup() {
     pinMode(_pin_b, INPUT_PULLUP);
 }
 
-unsigned long Encoder::getPulseCount() {
+long Encoder::getPulseCount() {
     return _pulseCount;
 }
 
