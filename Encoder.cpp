@@ -10,7 +10,7 @@ void Encoder::setup() {
     pinMode(_pin_b, INPUT_PULLUP);
 }
 
-unsigned long Encoder::getPulseCount() {
+long Encoder::getPulseCount() {
     return _pulseCount;
 }
 
@@ -24,7 +24,10 @@ float Encoder::getVelocity_rad_s() {
         return 0.0;
     }
 
-    float pulseTimeSec = (_pulseWidthMillisSum / (float)COUNTS_PER_REV) / 1000000.0;
+    float pulseTimeSec = ((float)_pulseWidthMillisSum / COUNTS_PER_REV) / 1000.0;
+    Serial.print("Pulse time sec: ");
+    Serial.println(pulseTimeSec);
+
     float velocity = (pulseTimeSec > 0) ? (ANGLE_PER_PULSE / pulseTimeSec) : 0;
     
     if (_direction == Encoder::CounterClockwise) {
@@ -57,13 +60,13 @@ void Encoder::readPulse() {
     }
 
     if (_direction != None) {
-        unsigned long pulseWidthMillis = nowMillis - _lastPulseMillis;
+        long pulseWidthMillis = nowMillis - _lastPulseMillis;
         _lastPulseMillis = nowMillis;
 
         _pulseWidthMillisSum = _pulseWidthMillisSum - _pulseWidthsMillis[_oldestPulseIndex];
         _pulseWidthsMillis[_oldestPulseIndex] = pulseWidthMillis;
         _pulseWidthMillisSum = _pulseWidthMillisSum + pulseWidthMillis;
-        _oldestPulseIndex = (_oldestPulseIndex + 1) % sizeof(_pulseWidthsMillis);
+        _oldestPulseIndex = (_oldestPulseIndex + 1) % COUNTS_PER_REV;
     }
 
     _lastEncoded = encoded;
