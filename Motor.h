@@ -17,12 +17,6 @@ public:
     Direction getDirection();
 
     void rotate_pwm(int speed_pwm);
-    void rotate_rad_s(float speed_rad_s);
-
-    // TODO: Update this value based on motor datasheet
-    constexpr static float MAX_SPEED_RAD_S = 10.471975;
-    static int rad_s_to_pwm(float speed_rad_s);
-
 private:
     byte _pin_en_l;
     byte _pin_en_r;

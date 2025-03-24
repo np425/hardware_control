@@ -25,7 +25,7 @@ const byte PIN_RENCODER_B_INT = 21;
 const float PID_KP = 1.0;
 const float PID_KI = 0.1;
 const float PID_KD = 0.01;
-const unsigned int RATE_PID_HZ = 1000;
+const unsigned int RATE_PID_HZ = 100;
 
 Motor _motor_l(PIN_LMOTOR_L_EN, PIN_LMOTOR_R_EN, PIN_LMOTOR_L_PWM, PIN_LMOTOR_R_PWM);
 Motor _motor_r(PIN_RMOTOR_L_EN, PIN_RMOTOR_R_EN, PIN_RMOTOR_L_PWM, PIN_RMOTOR_R_PWM);
@@ -38,6 +38,7 @@ PID _pid_motor_r(PID_KP, PID_KI, PID_KD);
 
 float _set_motor_l_speed_rad_s = 0;
 float _set_motor_r_speed_rad_s = 0;
+bool _pwm_controlled = true;
 
 String _cmd = "";
 bool _cmdReady = false;
@@ -81,17 +82,29 @@ void displayEncoderData() {
 bool setParameter(String name, String value) {
     bool success = false;
     if (name == "MOT_l_speed_rad_s") {
+        _pwm_controlled = false;
         _set_motor_l_speed_rad_s = atof(value.c_str());
+        if (_set_motor_l_speed_rad_s == 0.0) {
+            _motor_l.rotate_pwm(0);
+        }
         success = true;
     } else if (name == "MOT_l_speed_pwm") {
-        //_set_motor_l_pwm = atoi(value.c_str());
-        success = false;
+        _pwm_controlled = true;
+        int pwm = atoi(value.c_str());
+        _motor_l.rotate_pwm(pwm);
+        success = true;
     } else if (name == "MOT_r_speed_rad_s") {
+        _pwm_controlled = false;
         _set_motor_r_speed_rad_s = atof(value.c_str());
+        if (_set_motor_r_speed_rad_s == 0.0) {
+            _motor_r.rotate_pwm(0);
+        }
         success = true;      
     } else if (name == "MOT_r_speed_pwm") {
-        //_set_motor_r_pwm = atoi(value.c_str());
-        success = false;
+        _pwm_controlled = true;
+        int pwm = atoi(value.c_str());
+        _motor_r.rotate_pwm(pwm); 
+        success = true;
     }
     return success;
 }
@@ -148,15 +161,42 @@ void loop() {
     }
 
     unsigned long nowMillis = millis();
-    if (nowMillis - lastPIDUpdateMillis > 1000/RATE_PID_HZ) {
-        float measured_speed_rad_s, calculated_speed_pwm;
+    if (/* !_pwm_controlled && */ nowMillis - lastPIDUpdateMillis > 1000/RATE_PID_HZ) {
+        float measured_speed_rad_s;
+        int calculated_speed_pwm;
 
-        measured_speed_rad_s = _encoder_l.getVelocity_rad_s();
-        calculated_speed_pwm = _pid_motor_l.compute(_set_motor_l_speed_rad_s, measured_speed_rad_s);
-        _motor_l.rotate_pwm((int)round(measured_speed_rad_s));
+        float l_speed_rad_s = _encoder_l.getVelocity_rad_s();
+        float r_speed_rad_s = _encoder_r.getVelocity_rad_s();
 
-        measured_speed_rad_s = _encoder_r.getVelocity_rad_s();
-        calculated_speed_pwm = _pid_motor_r.compute(_set_motor_l_speed_rad_s, measured_speed_rad_s);
-        _motor_r.rotate_pwm((int)round(measured_speed_rad_s));
+        Serial.print("[L] Measured (rad/s): ");
+        Serial.print(l_speed_rad_s);
+        Serial.print(", ");
+        Serial.print("[R] Measured (rad/s): ");
+        Serial.println(r_speed_rad_s);
+
+        // if (_set_motor_l_speed_rad_s != 0.0) {
+        //     measured_speed_rad_s = _encoder_l.getVelocity_rad_s();
+        //     calculated_speed_pwm = (int)round(_pid_motor_l.compute(_set_motor_l_speed_rad_s, measured_speed_rad_s));
+        //     _motor_l.rotate_pwm(calculated_speed_pwm);
+
+        //     Serial.print("[L] Measured (rad/s): ");
+        //     Serial.print(measured_speed_rad_s);
+        //     Serial.print(", ");
+        //     Serial.print("Calculated (PWM): ");
+        //     Serial.println(calculated_speed_pwm);
+        // }
+        // if (_set_motor_r_speed_rad_s != 0.0) {            
+        //     measured_speed_rad_s = _encoder_r.getVelocity_rad_s();
+        //     calculated_speed_pwm = (int)round(_pid_motor_r.compute(_set_motor_r_speed_rad_s, measured_speed_rad_s));
+        //     _motor_r.rotate_pwm(calculated_speed_pwm);
+
+        //     Serial.print("[R] Measured (rad/s): ");
+        //     Serial.print(measured_speed_rad_s);
+        //     Serial.print(", ");
+        //     Serial.print("Calculated (PWM): ");
+        //     Serial.println(calculated_speed_pwm);
+        // }
+
+        lastPIDUpdateMillis = nowMillis;
     }
 }

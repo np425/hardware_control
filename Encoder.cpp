@@ -23,6 +23,7 @@ float Encoder::getVelocity_rad_s() {
     float nowPosition_rad = getPosition_rad();
 
     float elapsed_seconds = (nowMeasure_millis - _prevSpeedMeasure_millis) / 1000.0;
+    if (elapsed_seconds == 0.0) return 0.0;
     float distance_rad = (nowPosition_rad - _prevPositionMeasure_rad);
     float velocity_rad_s = distance_rad / elapsed_seconds;
 
