@@ -30,8 +30,7 @@ private:
     volatile long _pulseCount = 0;
     volatile byte _lastEncoded = 0;
     volatile Direction _direction = None;
-    volatile unsigned long _lastPulseMillis = 0;
-    volatile long _pulseWidthsMillis[COUNTS_PER_REV] = {0};
-    volatile byte _oldestPulseIndex = 0;
-    volatile long _pulseWidthMillisSum = 0;
+
+    unsigned long _prevSpeedMeasure_millis = millis();
+    float _prevPositionMeasure_rad = 0.0;
 };

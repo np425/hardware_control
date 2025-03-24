@@ -19,21 +19,17 @@ float Encoder::getPosition_rad() {
 }
   
 float Encoder::getVelocity_rad_s() {
-    unsigned long nowMillis = millis();
-    if (nowMillis - _lastPulseMillis > 100) {
-        return 0.0;
-    }
+    unsigned long nowMeasure_millis = millis();
+    float nowPosition_rad = getPosition_rad();
 
-    float pulseTimeSec = ((float)_pulseWidthMillisSum / COUNTS_PER_REV) / 1000.0;
-    Serial.print("Pulse time sec: ");
-    Serial.println(pulseTimeSec);
+    float elapsed_seconds = (nowMeasure_millis - _prevSpeedMeasure_millis) / 1000.0;
+    float distance_rad = (nowPosition_rad - _prevPositionMeasure_rad);
+    float velocity_rad_s = distance_rad / elapsed_seconds;
 
-    float velocity = (pulseTimeSec > 0) ? (ANGLE_PER_PULSE / pulseTimeSec) : 0;
-    
-    if (_direction == Encoder::CounterClockwise) {
-        velocity = -velocity;
-    }
-    return velocity;
+    _prevPositionMeasure_rad = nowPosition_rad;
+    _prevSpeedMeasure_millis = nowMeasure_millis;
+
+    return velocity_rad_s;
 }
 
 Encoder::Direction Encoder::getDirection() {
@@ -57,16 +53,6 @@ void Encoder::readPulse() {
         _direction = CounterClockwise;
     } else {
         _direction = None;
-    }
-
-    if (_direction != None) {
-        long pulseWidthMillis = nowMillis - _lastPulseMillis;
-        _lastPulseMillis = nowMillis;
-
-        _pulseWidthMillisSum = _pulseWidthMillisSum - _pulseWidthsMillis[_oldestPulseIndex];
-        _pulseWidthsMillis[_oldestPulseIndex] = pulseWidthMillis;
-        _pulseWidthMillisSum = _pulseWidthMillisSum + pulseWidthMillis;
-        _oldestPulseIndex = (_oldestPulseIndex + 1) % COUNTS_PER_REV;
     }
 
     _lastEncoded = encoded;
