@@ -4,19 +4,20 @@
 #include "PID.h"
 
 class PID {
-  private:
+public:
+    PID(float kp, float ki, float kd, float outputMin = 0, float outputMax = 255);
+    float compute(float setpoint, float currentValue);
+
+private:
+    constexpr static unsigned DERIVATIVE_WINDOW_SIZE = 50;
+
     float _minOutput;
     float _maxOutput;
-    float _integral;           
-    float _previousError;      
     float _kp;
     float _ki;
     float _kd;
-    unsigned long _lastUpdateMillis; 
-    float _previousDerivativeAvg;
-    const unsigned long _derivativeAvgCount = 50;
-  
-  public:
-    PID(float kp, float ki, float kd, float minOutput = 0, float maxOutput = 255);
-    float compute(float setpoint, float currentValue);
+    float _prevError = 0;      
+    float _prevIntegral = 0;           
+    float _prevDerivative = 0;
+    unsigned long _prevUpdate_ms = millis(); 
 };

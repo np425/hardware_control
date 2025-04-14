@@ -4,24 +4,21 @@
 
 class Motor {
 public:
-    enum Direction {
-        Clockwise = 0,
-        CounterClockwise = 1,
-        None = 2
-    };
-
-    Motor(byte pin_en_l, byte pin_en_r, byte pin_pwm_l, byte pin_pwm_r);
+    Motor(uint8_t pinEnL, uint8_t pinEnR, uint8_t pinPWML, uint8_t pinPWMR);
     void setup();
 
-    int getSpeed_pwm();
-    Direction getDirection();
+    uint8_t getSpeed_pwm();
+    bool getDirection();
 
-    void rotate_pwm(int speed_pwm);
+    void enableRotation_pwm(uint8_t speed_pwm, bool isForward);
+    constexpr static bool DIRECTION_FORWARD = true;
+    constexpr static bool DIRECTION_BACKWARD = false;
+
 private:
-    byte _pin_en_l;
-    byte _pin_en_r;
-    byte _pin_pwm_l;
-    byte _pin_pwm_r;
-    byte _speed_pwm = 0;
-    Direction _direction = None;
+    uint8_t _pinEnL;
+    uint8_t _pinEnR;
+    uint8_t _pinPWML;
+    uint8_t _pinPWMR;
+    uint8_t _speed_pwm = 0;
+    bool _direction = DIRECTION_FORWARD;
 };

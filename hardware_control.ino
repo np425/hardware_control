@@ -2,212 +2,187 @@
 #include "Encoder.h"
 #include "PID.h"
 
-const unsigned long RATE_BAUD_BPS = 115200;
 
-const byte PIN_LMOTOR_L_PWM = 6; // 490.20Hz
-const byte PIN_LMOTOR_R_PWM = 7; // 490.20Hz
-const byte PIN_LMOTOR_L_EN = 22;
-const byte PIN_LMOTOR_R_EN = 23;
+const uint8_t PIN_LMOTOR_L_PWM = 6; 
+const uint8_t PIN_LMOTOR_R_PWM = 7; 
+const uint8_t PIN_LMOTOR_L_EN = 22;
+const uint8_t PIN_LMOTOR_R_EN = 23;
 
-const byte PIN_RMOTOR_L_PWM = 11; // 490.20Hz
-const byte PIN_RMOTOR_R_PWM = 12; // 490.20Hz
-const byte PIN_RMOTOR_L_EN = 24;
-const byte PIN_RMOTOR_R_EN = 25;
+const uint8_t PIN_RMOTOR_L_PWM = 11; 
+const uint8_t PIN_RMOTOR_R_PWM = 12; 
+const uint8_t PIN_RMOTOR_L_EN = 24;
+const uint8_t PIN_RMOTOR_R_EN = 25;
 
-const byte PIN_SERVO_ACTUATOR = 30;
+const uint8_t PIN_LENCODER_A_INT = 18;
+const uint8_t PIN_LENCODER_B_INT = 19;
 
-const byte PIN_LENCODER_A_INT = 18;
-const byte PIN_LENCODER_B_INT = 19;
+const uint8_t PIN_RENCODER_A_INT = 20;
+const uint8_t PIN_RENCODER_B_INT = 21;
 
-const byte PIN_RENCODER_A_INT = 20;
-const byte PIN_RENCODER_B_INT = 21;
+//const uint8_t PIN_SERVO_ACTUATOR = 30;
 
 const float PID_KP = 3.0;
 const float PID_KI = 8.0;
 const float PID_KD = 2.5;
 const unsigned int RATE_PID_HZ = 100;
 
-Motor _motor_l(PIN_LMOTOR_L_EN, PIN_LMOTOR_R_EN, PIN_LMOTOR_L_PWM, PIN_LMOTOR_R_PWM);
-Motor _motor_r(PIN_RMOTOR_L_EN, PIN_RMOTOR_R_EN, PIN_RMOTOR_L_PWM, PIN_RMOTOR_R_PWM);
+const unsigned long RATE_BAUD_BPS = 115200;
 
-Encoder _encoder_l(PIN_LENCODER_A_INT, PIN_LENCODER_B_INT);
-Encoder _encoder_r(PIN_RENCODER_A_INT, PIN_RENCODER_B_INT);
 
-PID _pid_motor_l(PID_KP, PID_KI, PID_KD);
-PID _pid_motor_r(PID_KP, PID_KI, PID_KD);
+// Motors run at 490.20Hz frequency
+Motor _motorL(PIN_LMOTOR_L_EN, PIN_LMOTOR_R_EN, PIN_LMOTOR_L_PWM, PIN_LMOTOR_R_PWM);
+Motor _motorR(PIN_RMOTOR_L_EN, PIN_RMOTOR_R_EN, PIN_RMOTOR_L_PWM, PIN_RMOTOR_R_PWM);
 
-float _set_motor_l_speed_rad_s = 0;
-float _set_motor_r_speed_rad_s = 0;
+Encoder _encoderL(PIN_LENCODER_A_INT, PIN_LENCODER_B_INT);
+Encoder _encoderR(PIN_RENCODER_A_INT, PIN_RENCODER_B_INT);
 
-bool _pwm_controlled = true;
+PID _pidMotorL(PID_KP, PID_KI, PID_KD, 0, 255);
+PID _pidMotorR(PID_KP, PID_KI, PID_KD, 0, 255);
 
-String _cmd = "";
-bool _cmdReady = false;
 
-void encoder_l_update() {
-    _encoder_l.readPulse();
-}
+bool _enablePID = true;
+float _speedMotorL_radS = 0;
+float _speedMotorR_radS = 0;
 
-void encoder_r_update() {
-    _encoder_r.readPulse();
-}
+String _cmd;
 
-void serialEvent() {
-    while (Serial.available() > 0) {
-        char inChar = (char)Serial.read();
-        if (inChar == '\n') {
-            _cmdReady = true;
-            break;
-        } else {
-            _cmd += inChar;
-        }
-    }
-}
+
+void updateEncoderReadingL() { _encoderL.readPulse(); }
+void updateEncoderReadingR() { _encoderR.readPulse(); }
 
 void displayEncoderData() {
-    float position_l = _encoder_l.getPosition_rad();
-    float position_r = _encoder_r.getPosition_rad();
+    float positionL_rad = _encoderL.getPosition_rad();
+    float velocityL_radS = _encoderL.getVelocity_rad_s();
 
-    float velocity_l = _encoder_l.getVelocity_rad_s();
-    float velocity_r = _encoder_r.getVelocity_rad_s();
+    float positionR_rad = _encoderR.getPosition_rad();
+    float velocityR_radS = _encoderR.getVelocity_rad_s();
 
-    Serial.print(position_l, 3);
-    Serial.print(",");
-    Serial.print(position_r, 3);
-    Serial.print(",");
-    Serial.print(velocity_l, 3); 
-    Serial.print(",");
-    Serial.println(velocity_r, 3);
+    Serial.print(positionL_rad, 3); Serial.print(",");
+    Serial.print(positionR_rad, 3); Serial.print(",");
+    Serial.print(velocityL_radS, 3); Serial.print(",");
+    Serial.println(velocityR_radS, 3);
+}
+
+
+void extractValues(String string, char delimiter, String* values, unsigned int count) {
+    int start = 0;
+    int end = 0;
+
+    for (unsigned int i = 0; i < count-1; ++i) {
+        end = string.indexOf(delimiter, start);
+        if (end == -1) return; 
+
+        values[i] = string.substring(start, end);
+        start = end + 1;
+    }
+
+    // Last value gets the rest
+    values[count-1] = string.substring(start);
 }
 
 bool setParameter(String name, String value) {
-    bool success = false;
-    if (name == "MOT_l_speed_rad_s") {
-        _pwm_controlled = false;
-        _set_motor_l_speed_rad_s = atof(value.c_str());
-        if (_set_motor_l_speed_rad_s == 0.0) {
-            _motor_l.rotate_pwm(0);
-        }
-        success = true;
-    } else if (name == "MOT_l_speed_pwm") {
-        _pwm_controlled = true;
-        int pwm = atoi(value.c_str());
-        _motor_l.rotate_pwm(pwm);
-        success = true;
-    } else if (name == "MOT_r_speed_rad_s") {
-        _pwm_controlled = false;
-        _set_motor_r_speed_rad_s = atof(value.c_str());
-        if (_set_motor_r_speed_rad_s == 0.0) {
-            _motor_r.rotate_pwm(0);
-        }
-        success = true;      
-    } else if (name == "MOT_r_speed_pwm") {
-        _pwm_controlled = true;
-        int pwm = atoi(value.c_str());
-        _motor_r.rotate_pwm(pwm); 
-        success = true;
-    }
-    return success;
+    String parts[2];
+    extractValues(value, ',', parts, 2);
+
+    if (name == "speed_rad_s") {
+        float l = parts[0].toFloat();
+        float r = parts[1].toFloat();
+
+        _speedMotorL_radS = l;
+        _speedMotorR_radS = r;
+        _enablePID = true;
+    } else if (name == "speed_pwm") {
+        int l = parts[0].toInt();
+        int r = parts[1].toInt();
+
+        bool moveForwardL = l >= 0;
+        bool moveForwardR = r >= 0;
+
+        _enablePID = false;
+        _motorL.enableRotation_pwm(abs(l), moveForwardL);
+        _motorR.enableRotation_pwm(abs(r), moveForwardR);
+
+    } else return false;
+
+    return true;
 }
 
 bool executeCommand(String cmd) {
-    int endPos = cmd.indexOf(' ');
-    String action = cmd.substring(0, endPos);
-    int startPos = endPos + 1;
     bool success = false;
+    String parts[3];
+
+    extractValues(cmd, ' ', parts, 3);
+    String action = parts[0];
+    String name = parts[1];
 
     if (action == "set") {
-        endPos = cmd.indexOf(' ', startPos);
-        String name = cmd.substring(startPos, endPos);
-        startPos = endPos + 1;
-            
-        endPos = cmd.indexOf(' ', startPos);
-        String value = cmd.substring(startPos, endPos);
-        startPos = endPos + 1;
+        String value = parts[2];
 
         success = setParameter(name, value);
         if (success) {
             Serial.println("OK");
         }
     } else if (action == "get") {
-        displayEncoderData();
-    }
+        if (name == "encoder") {
+            displayEncoderData();
+            success = true;
+        }
+    } 
 
     return success;
 }
 
+
 void setup() {
-    Serial.begin(115200, SERIAL_8N1);
+    Serial.begin(RATE_BAUD_BPS, SERIAL_8N1);
     while (!Serial) {}
 
-    _motor_l.setup();
-    _motor_r.setup();
+    _motorL.setup();
+    _motorR.setup();
 
-    _encoder_l.setup();
-    _encoder_r.setup();
+    _encoderL.setup();
+    attachInterrupt(digitalPinToInterrupt(PIN_LENCODER_A_INT), updateEncoderReadingL, RISING);
 
-    attachInterrupt(digitalPinToInterrupt(PIN_LENCODER_A_INT), encoder_l_update, RISING);
-    // attachInterrupt(digitalPinToInterrupt(PIN_LENCODER_B_INT), encoder_l_update, RISING);
-    attachInterrupt(digitalPinToInterrupt(PIN_RENCODER_A_INT), encoder_r_update, RISING);
-    //attachInterrupt(digitalPinToInterrupt(PIN_RENCODER_B_INT), encoder_r_update, RISING);
+    _encoderR.setup();
+    attachInterrupt(digitalPinToInterrupt(PIN_RENCODER_A_INT), updateEncoderReadingR, RISING);
+
+    _cmd.reserve(64);
 }
 
-void loop() {
-    static unsigned long lastPIDUpdateMillis = millis();
 
-    if (_cmdReady) {
-        executeCommand(_cmd);
-        _cmd = "";
-        _cmdReady = false;
+void loop() {
+    static unsigned long lastPIDUpdate_ms = millis();
+    bool readyCmd = false;
+
+    char c;
+    while (Serial.available() > 0 && !readyCmd) {
+        c = Serial.read();
+        readyCmd = (c == '\n');
+        if (!readyCmd) _cmd += c;
     }
 
-    unsigned long nowMillis = millis();
-    if (/* !_pwm_controlled && */ nowMillis - lastPIDUpdateMillis > 1000/RATE_PID_HZ) {
-        float measured_speed_rad_s;
-        int calculated_speed_pwm;
+    if (readyCmd) {
+        executeCommand(_cmd);
+        _cmd.remove(0, _cmd.length());
+    }
 
-        // float l_speed_rad_s = _encoder_l.getVelocity_rad_s();
-        // float r_speed_rad_s = _encoder_r.getVelocity_rad_s();
+    // PID loop
+    unsigned long now_ms = millis();
+    if (_enablePID && now_ms - lastPIDUpdate_ms > 1000/RATE_PID_HZ) {
+        float measured_radS;
+        float calculated_pwm;
+        bool moveForward;
 
-        // displayEncoderData();
+        measured_radS = _encoderL.getVelocity_rad_s();
+        calculated_pwm = _pidMotorL.compute(fabs(_speedMotorL_radS), fabs(measured_radS));
+        moveForward = _speedMotorL_radS >= 0;
+        _motorL.enableRotation_pwm((uint8_t)round(calculated_pwm), moveForward);
 
-        // Serial.print("[L] Measured (rad/s): ");
-        // Serial.print(l_speed_rad_s);
-        // Serial.print(", ");
-        // Serial.print("[R] Measured (rad/s): ");
-        // Serial.println(r_speed_rad_s);
+        measured_radS = _encoderR.getVelocity_rad_s();
+        calculated_pwm = _pidMotorR.compute(fabs(_speedMotorR_radS), fabs(measured_radS));
+        moveForward = _speedMotorR_radS >= 0;
+        _motorR.enableRotation_pwm((uint8_t)round(calculated_pwm), moveForward);
 
-        if (_set_motor_l_speed_rad_s != 0.0) {
-            measured_speed_rad_s = _encoder_l.getVelocity_rad_s();
-            float speed = _pid_motor_l.compute(fabs(_set_motor_l_speed_rad_s), fabs(measured_speed_rad_s));
-            calculated_speed_pwm = (int)round(speed);
-
-            int direction = (_set_motor_l_speed_rad_s > 0) - (_set_motor_l_speed_rad_s < 0);
-
-            _motor_l.rotate_pwm(calculated_speed_pwm * direction);
-
-            // Serial.print("[L] Measured (rad/s): ");
-            // Serial.print(measured_speed_rad_s);
-            // Serial.print(", ");
-            // Serial.print("Calculated (PWM): ");
-            // Serial.println(calculated_speed_pwm);
-        }
-        if (_set_motor_r_speed_rad_s != 0.0) {            
-            measured_speed_rad_s = _encoder_r.getVelocity_rad_s();
-            float speed = _pid_motor_r.compute(fabs(_set_motor_r_speed_rad_s), fabs(measured_speed_rad_s));
-            calculated_speed_pwm = (int)round(speed);
-            
-            int direction = (_set_motor_r_speed_rad_s > 0) - (_set_motor_r_speed_rad_s < 0);
-
-            _motor_r.rotate_pwm(calculated_speed_pwm * direction);
-
-            // Serial.print("[R] Measured (rad/s): ");
-            // Serial.print(measured_speed_rad_s);
-            // Serial.print(", ");
-            // Serial.print("Calculated (PWM): ");
-            // Serial.println(calculated_speed_pwm);
-        }
-
-        lastPIDUpdateMillis = nowMillis;
+        lastPIDUpdate_ms = now_ms;
     }
 }

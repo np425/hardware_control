@@ -6,50 +6,40 @@ PID::PID(float kp, float ki, float kd, float minOutput, float maxOutput) {
     _kp = kp;
     _ki = ki;
     _kd = kd;
-    _integral = 0;
-    _previousError = 0;
-    _previousDerivativeAvg = 0;
-    _lastUpdateMillis = millis();
 }
 
 float PID::compute(float setpoint, float currentValue) {
-    float dt = (millis() - _lastUpdateMillis) / 1000.0;
-    _lastUpdateMillis = millis();
+    unsigned long now_ms = millis();
+    float timeElapsed_s = (now_ms - _prevUpdate_ms) / 1000.0;
+    _prevUpdate_ms = now_ms;
 
-    if (dt == 0) {
-        dt = 0.0001;
-    } else if (dt > 1) {
-        _integral = 0;
-        _previousDerivativeAvg = 0;
-        _previousError = 0;
+    if (timeElapsed_s < 0.00001) {
+        timeElapsed_s = 0.0001;
+    } else if (timeElapsed_s > 1) {
+        // Reset after pause
+        _prevIntegral = 0;
+        _prevDerivative = 0;
+        _prevError = 0;
         return 0;
     }
     
     float error = setpoint - currentValue;
-    float proportional = _kp * error;
+    float proportionalTerm = _kp * error;
 
-    _integral += error * dt;
-    float integralTerm = constrain(_ki * _integral, -_maxOutput, _maxOutput);
+    _prevIntegral += error * timeElapsed_s;
+    float integralTerm = _ki * _prevIntegral;
+    // float integralTerm = constrain(_ki * _prevIntegral, -_maxOutput, +_maxOutput);
 
-    float derivative = (error - _previousError) / dt;
-    float derivativeAvg = (_derivativeAvgCount * _previousDerivativeAvg + derivative) / (_derivativeAvgCount + 1);
+    float derivative = (error - _prevError) / timeElapsed_s;
+    // float derivativeAvg = (DERIVATIVE_WINDOW_SIZE * _prevDerivative + derivative) / (DERIVATIVE_WINDOW_SIZE + 1);
+    // _prevDerivative = derivativeAvg;
 
-    _previousDerivativeAvg = derivativeAvg;
-    float derivativeTerm = _kd * derivativeAvg;
+    float derivativeTerm = _kd * derivative;
 
     // Calculate output
-    float output = proportional + integralTerm + derivativeTerm;
+    float output = proportionalTerm + integralTerm + derivativeTerm;
     output = constrain(output, _minOutput, _maxOutput);
 
-    // Serial.print(" | ");
-    // Serial.print(proportional);
-    // Serial.print(" + ");
-    // Serial.print(integralTerm);
-    // Serial.print(" + ");
-    // Serial.print(derivativeTerm);
-    // Serial.print(" = ");
-    // Serial.print(output);
-
-    _previousError = error;
+    _prevError = error;
     return output;
 }

@@ -1,62 +1,51 @@
 #include "Motor.h"
 
-Motor::Motor(byte pin_en_l, byte pin_en_r, byte pin_pwm_l, byte pin_pwm_r) {
-    _pin_en_l = pin_en_l;
-    _pin_en_r = pin_en_r;
-    _pin_pwm_l = pin_pwm_l;
-    _pin_pwm_r = pin_pwm_r;
+Motor::Motor(uint8_t pinEnL, uint8_t pinEnR, uint8_t pinPWML, uint8_t pinPWMR) {
+    _pinEnL = pinEnL;
+    _pinEnR = pinEnR;
+    _pinPWML = pinPWML;
+    _pinPWMR = pinPWMR;
 }
 
 void Motor::setup() {
-    pinMode(_pin_en_l, OUTPUT);
-    pinMode(_pin_en_r, OUTPUT);
-    pinMode(_pin_pwm_l, OUTPUT);
-    pinMode(_pin_pwm_r, OUTPUT);
+    // Motor runs at 490.20Hz frequency
+    pinMode(_pinEnL, OUTPUT);
+    pinMode(_pinEnR, OUTPUT);
+    pinMode(_pinPWML, OUTPUT);
+    pinMode(_pinPWMR, OUTPUT);
 }
 
-Motor::Direction Motor::getDirection() {
-    return _direction;
-}
-
-int Motor::getSpeed_pwm() {
+uint8_t Motor::getSpeed_pwm() {
     return _speed_pwm;
 }
 
-void Motor::rotate_pwm(int speed_pwm) {
-    Direction direction;
-    if (speed_pwm > 0) {
-        direction = Clockwise;
-    } else if (speed_pwm < 0) {
-        direction = CounterClockwise;
-    } else {
-        direction = None;
-    }
+bool Motor::getDirection() {
+    return _direction;
+}
 
-    speed_pwm = abs(speed_pwm);
-    if (speed_pwm > 255) {
-        speed_pwm = 255;
-    }
-
-    bool change_direction = _direction != direction;
+void Motor::enableRotation_pwm(uint8_t speed_pwm, bool direction) {
+    bool changeDirection = _direction != direction;
 
     _direction = direction;
     _speed_pwm = speed_pwm;
 
-    if (_direction == None) {
-        digitalWrite(_pin_en_l, LOW);
-        digitalWrite(_pin_en_r, LOW);
+    if (speed_pwm == 0) {
+        digitalWrite(_pinEnL, LOW);
+        digitalWrite(_pinEnR, LOW);
+        analogWrite(_pinPWML, 0);
+        analogWrite(_pinPWMR, 0);
         return;
     }
 
-    if (change_direction) {
-        analogWrite(_pin_pwm_l, 0);
-        analogWrite(_pin_pwm_r, 0);
+    if (changeDirection) {
+        analogWrite(_pinPWML, 0);
+        analogWrite(_pinPWMR, 0);
     }
 
-    byte pin_pwm = (direction == Clockwise) ? _pin_pwm_r : _pin_pwm_l;
+    uint8_t pin_pwm = (direction == DIRECTION_FORWARD) ? _pinPWMR : _pinPWML;
     
     analogWrite(pin_pwm, _speed_pwm);
 
-    digitalWrite(_pin_en_l, HIGH);
-    digitalWrite(_pin_en_r, HIGH);
+    digitalWrite(_pinEnL, HIGH);
+    digitalWrite(_pinEnR, HIGH);
 }

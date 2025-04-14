@@ -1,13 +1,13 @@
 #include "Encoder.h"
 
-Encoder::Encoder(byte pin_a, byte pin_b) {
-    _pin_a = pin_a;
-    _pin_b = pin_b;
+Encoder::Encoder(uint8_t pinA, uint8_t pinB) {
+    _pinA = pinA;
+    _pinB = pinB;
 }
 
 void Encoder::setup() {
-    pinMode(_pin_a, INPUT_PULLUP);
-    pinMode(_pin_b, INPUT_PULLUP);
+    pinMode(_pinA, INPUT_PULLUP);
+    pinMode(_pinB, INPUT_PULLUP);
 }
 
 long Encoder::getPulseCount() {
@@ -19,38 +19,35 @@ float Encoder::getPosition_rad() {
 }
   
 float Encoder::getVelocity_rad_s() {
-    unsigned long now_micros = micros();
-    if (_pulseWidthAvg_micros == 0.0 || now_micros - _lastPulse_micros > 1000000.0) return 0.0;
-    float speed_rad_s = (2 * PI * 1000000) / (PULSES_PER_REV * _pulseWidthAvg_micros) /* * _direction */;
+    constexpr long US_TO_S = 1000000;
+
+    unsigned long now_us = micros();
+
+    if (_pulseWidth_us == 0.0 || now_us - _prevPulse_us > US_TO_S) return 0.0;
+
+    float speed_rad_s = (2.0f * PI * US_TO_S) / ((float)PULSES_PER_REV * _pulseWidth_us);
     return speed_rad_s * _direction;
 }
 
-Encoder::Direction Encoder::getDirection() {
+bool Encoder::getDirection() {
     return _direction;
 }
 
 void Encoder::readPulse() {
     noInterrupts();
-    //bool a = digitalRead(_pin_a);
-    bool b = digitalRead(_pin_b);
-    // Serial.print(a);
-    // Serial.print(" ");
-    //Serial.println(b);
-    unsigned long now_micros = micros();
+    bool b = digitalRead(_pinB);
+    unsigned long now_us = micros();
     interrupts();
 
     if (b) {
-        //Serial.println("b++");
         ++_pulseCount;
-        _direction = Clockwise;
-    }
-    else {
-        //Serial.println("b--");
+        _direction = DIRECTION_FORWARD;
+    } else {
         --_pulseCount;
-        _direction = CounterClockwise;
+        _direction = DIRECTION_BACKWARD;
     }
 
-    unsigned long pulseWidth_micros = now_micros - _lastPulse_micros;
-    _pulseWidthAvg_micros = (_pulseWidthAvg_micros * (AVG_WINDOW_SIZE-1) + pulseWidth_micros) / AVG_WINDOW_SIZE;
-    _lastPulse_micros = now_micros;
+    unsigned long pulseWidth_us = now_us - _prevPulse_us;
+    _pulseWidth_us = (_pulseWidth_us * (AVG_WINDOW_SIZE-1) + pulseWidth_us) / AVG_WINDOW_SIZE;
+    _prevPulse_us = now_us;
 }

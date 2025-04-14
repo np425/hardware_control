@@ -4,32 +4,31 @@
 
 class Encoder {
 public:
-    constexpr static int PULSES_PER_REV = 36;
-    constexpr static double ANGLE_PER_PULSE = (2.0 * PI) / PULSES_PER_REV;
-    constexpr static int AVG_WINDOW_SIZE = 4;
+    constexpr static bool DIRECTION_FORWARD = true;
+    constexpr static bool DIRECTION_BACKWARD = false;
 
-    enum Direction {
-        Clockwise = 1,
-        CounterClockwise = -1,
-    };
+    constexpr static unsigned PULSES_PER_REV = 36;
+    constexpr static float ANGLE_PER_PULSE = (2.0 * PI) / PULSES_PER_REV;
+    constexpr static unsigned AVG_WINDOW_SIZE = 4;
 
-    Encoder(byte pin_a, byte pin_b);
+    Encoder(uint8_t pinA, uint8_t pinB);
     void setup();
 
     long getPulseCount();
     float getPosition_rad();
     float getVelocity_rad_s();
 
-    Direction getDirection();
+    bool getDirection();
     void readPulse();
 
+
 private:
-    byte _pin_a;
-    byte _pin_b;
+    uint8_t _pinA;
+    uint8_t _pinB;
 
     volatile long _pulseCount = 0;
-    volatile byte _lastEncoded = 0;
-    volatile Direction _direction = Clockwise;
-    volatile unsigned long _lastPulse_micros = micros();
-    volatile unsigned long _pulseWidthAvg_micros = 0;
+    volatile uint8_t _lastEncoded = 0;
+    volatile bool _direction = DIRECTION_FORWARD;
+    volatile unsigned long _prevPulse_us = micros();
+    volatile unsigned long _pulseWidth_us = 0;
 };
