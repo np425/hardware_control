@@ -18,6 +18,11 @@ float PID::compute(float setpoint, float currentValue) {
 
     if (dt == 0) {
         dt = 0.0001;
+    } else if (dt > 1) {
+        _integral = 0;
+        _previousDerivativeAvg = 0;
+        _previousError = 0;
+        return 0;
     }
     
     float error = setpoint - currentValue;

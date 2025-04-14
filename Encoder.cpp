@@ -20,9 +20,9 @@ float Encoder::getPosition_rad() {
   
 float Encoder::getVelocity_rad_s() {
     unsigned long now_micros = micros();
-    if (_pulseWidthAvg_micros == 0.0 || now_micros - _lastPulse_micros > 250000.0) return 0.0;
+    if (_pulseWidthAvg_micros == 0.0 || now_micros - _lastPulse_micros > 1000000.0) return 0.0;
     float speed_rad_s = (2 * PI * 1000000) / (PULSES_PER_REV * _pulseWidthAvg_micros) /* * _direction */;
-    return speed_rad_s;
+    return speed_rad_s * _direction;
 }
 
 Encoder::Direction Encoder::getDirection() {
@@ -31,15 +31,21 @@ Encoder::Direction Encoder::getDirection() {
 
 void Encoder::readPulse() {
     noInterrupts();
+    //bool a = digitalRead(_pin_a);
     bool b = digitalRead(_pin_b);
+    // Serial.print(a);
+    // Serial.print(" ");
+    //Serial.println(b);
     unsigned long now_micros = micros();
     interrupts();
 
     if (b) {
+        //Serial.println("b++");
         ++_pulseCount;
         _direction = Clockwise;
     }
     else {
+        //Serial.println("b--");
         --_pulseCount;
         _direction = CounterClockwise;
     }
