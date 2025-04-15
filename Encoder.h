@@ -9,7 +9,7 @@ public:
 
     constexpr static unsigned PULSES_PER_REV = 36;
     constexpr static float ANGLE_PER_PULSE = (2.0 * PI) / PULSES_PER_REV;
-    constexpr static unsigned AVG_WINDOW_SIZE = 4;
+    constexpr static unsigned AVG_WINDOW_SIZE = 1;
 
     Encoder(uint8_t pinA, uint8_t pinB);
     void setup();

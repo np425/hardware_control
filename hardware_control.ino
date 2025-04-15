@@ -36,11 +36,11 @@ Motor _motorR(PIN_RMOTOR_L_EN, PIN_RMOTOR_R_EN, PIN_RMOTOR_L_PWM, PIN_RMOTOR_R_P
 Encoder _encoderL(PIN_LENCODER_A_INT, PIN_LENCODER_B_INT);
 Encoder _encoderR(PIN_RENCODER_A_INT, PIN_RENCODER_B_INT);
 
-PID _pidMotorL(PID_KP, PID_KI, PID_KD, 0, 255);
-PID _pidMotorR(PID_KP, PID_KI, PID_KD, 0, 255);
+PID _pidMotorL(PID_KP, PID_KI, PID_KD, -255, 255);
+PID _pidMotorR(PID_KP, PID_KI, PID_KD, -255, 255);
 
 
-bool _enablePID = true;
+bool _enablePID = false;
 float _speedMotorL_radS = 0;
 float _speedMotorR_radS = 0;
 
@@ -70,7 +70,10 @@ void extractValues(String string, char delimiter, String* values, unsigned int c
 
     for (unsigned int i = 0; i < count-1; ++i) {
         end = string.indexOf(delimiter, start);
-        if (end == -1) return; 
+        if (end == -1) {
+            values[i] = string.substring(start);
+            return;
+        } 
 
         values[i] = string.substring(start, end);
         start = end + 1;
@@ -82,7 +85,7 @@ void extractValues(String string, char delimiter, String* values, unsigned int c
 
 bool setParameter(String name, String value) {
     String parts[2];
-    extractValues(value, ',', parts, 2);
+    extractValues(value, ' ', parts, 2);
 
     if (name == "speed_rad_s") {
         float l = parts[0].toFloat();
@@ -169,19 +172,37 @@ void loop() {
     // PID loop
     unsigned long now_ms = millis();
     if (_enablePID && now_ms - lastPIDUpdate_ms > 1000/RATE_PID_HZ) {
-        float measured_radS;
-        float calculated_pwm;
-        bool moveForward;
-
+        float measured_radS, calculated_pwm;
+        bool direction;
+        
         measured_radS = _encoderL.getVelocity_rad_s();
-        calculated_pwm = _pidMotorL.compute(fabs(_speedMotorL_radS), fabs(measured_radS));
-        moveForward = _speedMotorL_radS >= 0;
-        _motorL.enableRotation_pwm((uint8_t)round(calculated_pwm), moveForward);
+        if (fabs(measured_radS) <= 0.0001 && fabs(_speedMotorL_radS) <= 0.0001) {
+            _motorL.enableRotation_pwm(0, true);
+        } else {
+            calculated_pwm = _pidMotorL.compute(_speedMotorL_radS, measured_radS);
+            direction = calculated_pwm >= 0;
+            _motorL.enableRotation_pwm((uint8_t)fabs(calculated_pwm), direction);
+        }
+
+        Serial.print("[L] Measured rad/s ");
+        Serial.print(measured_radS);
+        Serial.print(" Calculated PWM ");
+        Serial.println(calculated_pwm);
 
         measured_radS = _encoderR.getVelocity_rad_s();
-        calculated_pwm = _pidMotorR.compute(fabs(_speedMotorR_radS), fabs(measured_radS));
-        moveForward = _speedMotorR_radS >= 0;
-        _motorR.enableRotation_pwm((uint8_t)round(calculated_pwm), moveForward);
+        if (fabs(measured_radS) <= 0.0001 && fabs(_speedMotorR_radS) <= 0.0001) {
+            _motorR.enableRotation_pwm(0, true);
+        } else {
+            calculated_pwm = _pidMotorR.compute(_speedMotorR_radS, measured_radS);
+            direction = calculated_pwm >= 0;
+            _motorR.enableRotation_pwm((uint8_t)fabs(calculated_pwm), direction);
+        }
+
+
+        Serial.print("[R] Measured rad/s ");
+        Serial.print(measured_radS);
+        Serial.print(" Calculated PWM ");
+        Serial.println(calculated_pwm);
 
         lastPIDUpdate_ms = now_ms;
     }

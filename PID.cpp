@@ -27,14 +27,14 @@ float PID::compute(float setpoint, float currentValue) {
     float proportionalTerm = _kp * error;
 
     _prevIntegral += error * timeElapsed_s;
+    _prevIntegral = constrain(_prevIntegral, _minOutput / _ki, _maxOutput / _ki);
     float integralTerm = _ki * _prevIntegral;
-    // float integralTerm = constrain(_ki * _prevIntegral, -_maxOutput, +_maxOutput);
 
     float derivative = (error - _prevError) / timeElapsed_s;
-    // float derivativeAvg = (DERIVATIVE_WINDOW_SIZE * _prevDerivative + derivative) / (DERIVATIVE_WINDOW_SIZE + 1);
-    // _prevDerivative = derivativeAvg;
+    float derivativeAvg = (DERIVATIVE_WINDOW_SIZE * _prevDerivative + derivative) / (DERIVATIVE_WINDOW_SIZE + 1);
+    _prevDerivative = derivativeAvg;
 
-    float derivativeTerm = _kd * derivative;
+    float derivativeTerm = _kd * derivativeAvg;
 
     // Calculate output
     float output = proportionalTerm + integralTerm + derivativeTerm;
