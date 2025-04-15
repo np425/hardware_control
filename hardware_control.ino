@@ -184,10 +184,10 @@ void loop() {
             _motorL.enableRotation_pwm((uint8_t)fabs(calculated_pwm), direction);
         }
 
-        Serial.print("[L] Measured rad/s ");
-        Serial.print(measured_radS);
-        Serial.print(" Calculated PWM ");
-        Serial.println(calculated_pwm);
+        // Serial.print("[L] Measured rad/s ");
+        // Serial.print(measured_radS);
+        // Serial.print(" Calculated PWM ");
+        // Serial.println(calculated_pwm);
 
         measured_radS = _encoderR.getVelocity_rad_s();
         if (fabs(measured_radS) <= 0.0001 && fabs(_speedMotorR_radS) <= 0.0001) {
@@ -198,11 +198,10 @@ void loop() {
             _motorR.enableRotation_pwm((uint8_t)fabs(calculated_pwm), direction);
         }
 
-
-        Serial.print("[R] Measured rad/s ");
-        Serial.print(measured_radS);
-        Serial.print(" Calculated PWM ");
-        Serial.println(calculated_pwm);
+        // Serial.print("[R] Measured rad/s ");
+        // Serial.print(measured_radS);
+        // Serial.print(" Calculated PWM ");
+        // Serial.println(calculated_pwm);
 
         lastPIDUpdate_ms = now_ms;
     }

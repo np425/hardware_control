@@ -26,7 +26,7 @@ float Encoder::getVelocity_rad_s() {
     if (_pulseWidth_us == 0.0 || now_us - _prevPulse_us > US_TO_S) return 0.0;
 
     float speed_rad_s = (2.0f * PI * US_TO_S) / ((float)PULSES_PER_REV * _pulseWidth_us);
-    int direction = _direction ? 1 : -1;
+    int direction = (_direction == DIRECTION_FORWARD) ? 1 : -1;
     return speed_rad_s * direction;
 }
 
