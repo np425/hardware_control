@@ -13,6 +13,11 @@ void Motor::setup() {
     pinMode(_pinEnR, OUTPUT);
     pinMode(_pinPWML, OUTPUT);
     pinMode(_pinPWMR, OUTPUT);
+
+    digitalWrite(_pinEnL, 0);
+    digitalWrite(_pinEnR, 0);
+    analogWrite(_pinPWML, 0);
+    analogWrite(_pinPWMR, 0);
 }
 
 uint8_t Motor::getSpeed_pwm() {

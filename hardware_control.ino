@@ -19,7 +19,7 @@ const uint8_t PIN_LENCODER_B_INT = 19;
 const uint8_t PIN_RENCODER_A_INT = 20;
 const uint8_t PIN_RENCODER_B_INT = 21;
 
-//const uint8_t PIN_SERVO_ACTUATOR = 30;
+const uint8_t PIN_UV_LAMP = 39;
 
 const float PID_KP = 3.0;
 const float PID_KI = 8.0;
@@ -104,8 +104,16 @@ bool setParameter(String name, String value) {
         _enablePID = false;
         _motorL.enableRotation_pwm(abs(l), moveForwardL);
         _motorR.enableRotation_pwm(abs(r), moveForwardR);
-
-    } else return false;
+    } else if (name == "uv_lamp") {
+        String state = parts[0];
+        if (state == "1") {
+            digitalWrite(PIN_UV_LAMP, HIGH);
+            Serial.println("Turned on UV lamp");
+        } else if (state == "0") {
+            digitalWrite(PIN_UV_LAMP, LOW);
+            Serial.println("Turned off UV lamp");
+        } else return false;
+    } return false;
 
     return true;
 }
@@ -129,6 +137,9 @@ bool executeCommand(String cmd) {
         if (name == "encoder") {
             displayEncoderData();
             success = true;
+        } else if (name == "uv_lamp") {
+            Serial.println(digitalRead(PIN_UV_LAMP));
+            success = true;
         }
     } 
 
@@ -148,6 +159,9 @@ void setup() {
 
     _encoderR.setup();
     attachInterrupt(digitalPinToInterrupt(PIN_RENCODER_A_INT), updateEncoderReadingR, RISING);
+
+    pinMode(PIN_UV_LAMP, OUTPUT);
+    digitalWrite(PIN_UV_LAMP, LOW);
 
     _cmd.reserve(64);
 }
@@ -184,11 +198,6 @@ void loop() {
             _motorL.enableRotation_pwm((uint8_t)fabs(calculated_pwm), direction);
         }
 
-        // Serial.print("[L] Measured rad/s ");
-        // Serial.print(measured_radS);
-        // Serial.print(" Calculated PWM ");
-        // Serial.println(calculated_pwm);
-
         measured_radS = _encoderR.getVelocity_rad_s();
         if (fabs(measured_radS) <= 0.0001 && fabs(_speedMotorR_radS) <= 0.0001) {
             _motorR.enableRotation_pwm(0, true);
@@ -197,11 +206,6 @@ void loop() {
             direction = calculated_pwm >= 0;
             _motorR.enableRotation_pwm((uint8_t)fabs(calculated_pwm), direction);
         }
-
-        // Serial.print("[R] Measured rad/s ");
-        // Serial.print(measured_radS);
-        // Serial.print(" Calculated PWM ");
-        // Serial.println(calculated_pwm);
 
         lastPIDUpdate_ms = now_ms;
     }
