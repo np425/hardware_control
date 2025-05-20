@@ -51,4 +51,6 @@ void Encoder::readPulse() {
     unsigned long pulseWidth_us = now_us - _prevPulse_us;
     _pulseWidth_us = (_pulseWidth_us * (AVG_WINDOW_SIZE-1) + pulseWidth_us) / AVG_WINDOW_SIZE;
     _prevPulse_us = now_us;
+
+    // Serial.println(_pulseWidth_us / 1000.0);
 }

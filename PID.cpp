@@ -1,12 +1,7 @@
 #include "PID.h"
 
-PID::PID(float kp, float ki, float kd, float minOutput, float maxOutput) {
-    _minOutput = minOutput;
-    _maxOutput = maxOutput;
-    _kp = kp;
-    _ki = ki;
-    _kd = kd;
-}
+PID::PID(float kp, float ki, float kd, float minOut, float maxOut)
+    : kp(kp), ki(ki), kd(kd), minOutput(minOut), maxOutput(maxOut) {}
 
 float PID::compute(float setpoint, float currentValue) {
     unsigned long now_ms = millis();
@@ -24,21 +19,26 @@ float PID::compute(float setpoint, float currentValue) {
     }
     
     float error = setpoint - currentValue;
-    float proportionalTerm = _kp * error;
+    float proportionalTerm = kp * error;
 
+    // Integral clamping to prevent anti-windup
     _prevIntegral += error * timeElapsed_s;
-    _prevIntegral = constrain(_prevIntegral, _minOutput / _ki, _maxOutput / _ki);
-    float integralTerm = _ki * _prevIntegral;
+    if (abs(ki) > 1e-6) { // Check if ki is practically non-zero
+         _prevIntegral = constrain(_prevIntegral, minOutput / ki, maxOutput / ki);
+    } else {
+         _prevIntegral = 0; // Or handle appropriately if ki is zero
+    }
+    float integralTerm = ki * _prevIntegral;
 
     float derivative = (error - _prevError) / timeElapsed_s;
     float derivativeAvg = (DERIVATIVE_WINDOW_SIZE * _prevDerivative + derivative) / (DERIVATIVE_WINDOW_SIZE + 1);
     _prevDerivative = derivativeAvg;
 
-    float derivativeTerm = _kd * derivativeAvg;
+    float derivativeTerm = kd * derivativeAvg;
 
     // Calculate output
     float output = proportionalTerm + integralTerm + derivativeTerm;
-    output = constrain(output, _minOutput, _maxOutput);
+    output = constrain(output, minOutput, maxOutput);
 
     _prevError = error;
     return output;
